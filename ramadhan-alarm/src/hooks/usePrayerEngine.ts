@@ -27,8 +27,9 @@ export default function usePrayerEngine(
         return { name, date };
       });
 
-      let current = "";
-      let next = "";
+      // ---- CURRENT + NEXT ----
+      let current = "Isha";
+      let next = "Fajr";
 
       for (let i = 0; i < prayers.length; i++) {
         const p = prayers[i];
@@ -41,25 +42,18 @@ export default function usePrayerEngine(
         }
       }
 
-      if (!current) {
-        current = "Isha";
-        next = "Fajr";
-      }
-
-      // -----------------------
-      // MAIN IFTAR / SEHRI LOGIC
-      // -----------------------
-
+      // ---- IFTAR / SEHRI TARGET ----
       const isFasting =
         ["Fajr", "Dhuhr", "Asr"].includes(current);
 
       let targetDate: Date;
+      let startDate: Date;
 
       if (isFasting) {
-        // Countdown to Maghrib
+        startDate = prayers.find(p => p.name === "Fajr")!.date;
         targetDate = prayers.find(p => p.name === "Maghrib")!.date;
       } else {
-        // Countdown to next Fajr
+        startDate = prayers.find(p => p.name === "Isha")!.date;
         targetDate = prayers.find(p => p.name === "Fajr")!.date;
 
         if (now > targetDate) {
@@ -70,14 +64,17 @@ export default function usePrayerEngine(
 
       const diff = targetDate.getTime() - now.getTime();
 
-      const hours = Math.floor(diff / 3600000);
-      const minutes = Math.floor((diff % 3600000) / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
+      const hours = Math.max(0, Math.floor(diff / 3600000));
+      const minutes = Math.max(
+        0,
+        Math.floor((diff % 3600000) / 60000)
+      );
+      const seconds = Math.max(
+        0,
+        Math.floor((diff % 60000) / 1000)
+      );
 
-      // -----------------------
-      // MINI PRAYER PROGRESS
-      // -----------------------
-
+      // ---- MINI PRAYER RINGS ----
       const prayerProgress: Record<string, number> = {};
 
       prayers.forEach((p, index) => {
@@ -97,25 +94,19 @@ export default function usePrayerEngine(
         }
       });
 
-      // -----------------------
-      // MAIN PROGRESS
-      // -----------------------
-
+      // ---- MAIN RING PROGRESS ----
       const totalDuration =
-        targetDate.getTime() -
-        (isFasting
-          ? prayers.find(p => p.name === "Fajr")!.date.getTime()
-          : now.getTime());
+        targetDate.getTime() - startDate.getTime();
 
       const elapsedDuration =
-        isFasting
-          ? now.getTime() -
-            prayers.find(p => p.name === "Fajr")!.date.getTime()
-          : 0;
+        now.getTime() - startDate.getTime();
 
       const mainProgress =
-        isFasting && totalDuration > 0
-          ? (elapsedDuration / totalDuration) * 100
+        totalDuration > 0
+          ? Math.min(
+              100,
+              Math.max(0, (elapsedDuration / totalDuration) * 100)
+            )
           : 0;
 
       setState({
