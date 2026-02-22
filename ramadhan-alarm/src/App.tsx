@@ -133,58 +133,67 @@ function App() {
         )}
       </div>
 
-      {/* MAIN SEHRI / IFTAR COUNTDOWN */}
-      <div className="main-ring-section">
-        <h3>
-          {engine.isFasting
-            ? "🌇 Iftar Countdown"
-            : "🌅 Sehri Countdown"}
-        </h3>
+      {/* MAIN CARD */}
+     <div className="main-ring-section">
 
-        <CircularProgress
-          percentage={engine.mainProgress}
-          size={170}
-          strokeWidth={12}
-          color={
-            engine.isFasting
-              ? "#f97316"
-              : "#22d3ee"
-          }
-        >
-          <div>
-            <div>{engine.timeLeft}</div>
-          </div>
-        </CircularProgress>
+  <h3>
+    {engine.isFasting
+      ? "🌇 Iftar Countdown"
+      : "🌅 Sehri Countdown"}
+  </h3>
 
-        <p>
-          Tahajjud starts at {engine.tahajjudTime}
-        </p>
-      </div>
+  <div className="main-rings-row">
 
-      {/* CURRENT PRAYER SECTION */}
-      <div className="current-prayer-section">
-        <h3>🕌 Current Prayer</h3>
+    {/* Sehri / Iftar Ring */}
+    <div className="ring-column">
+      <CircularProgress
+        percentage={engine.mainProgress}
+        size={170}
+        strokeWidth={12}
+        color={
+          engine.isFasting
+            ? "#f97316"
+            : "#22d3ee"
+        }
+      >
+        <div>{engine.timeLeft}</div>
+      </CircularProgress>
 
-        <CircularProgress
-          percentage={
-            engine.prayerProgress[engine.currentPrayer]
-          }
-          size={140}
-          strokeWidth={10}
-          color="#34d399"
-        >
-          <div>
-            <div className="current-name">
-              {engine.currentPrayer}
+      <p className="ring-subtext">
+        Tahajjud starts at {engine.tahajjudTime}
+      </p>
+    </div>
+
+    {/* Current Prayer Ring */}
+    <div className="ring-column">
+      <h4 style={{ marginBottom: "1rem" }}>
+        🕌 Current Prayer
+      </h4>
+
+      <CircularProgress
+        percentage={
+          engine.prayerProgress[
+            engine.currentPrayer
+          ] ?? 0
+        }
+        size={140}
+        strokeWidth={10}
+        color="#34d399"
+      >
+        <div>
+          <div>{engine.currentPrayer}</div>
+          {engine.currentPrayer !== "Tahajjud" && (
+            <div>
+              {data.timings[engine.currentPrayer]}
             </div>
-            {engine.currentPrayer !== "Tahajjud" && (
-              <div className="current-time">
-                {data.timings[engine.currentPrayer]}
-              </div>
-            )}
-          </div>
-        </CircularProgress>
-      </div>
+          )}
+        </div>
+      </CircularProgress>
+    </div>
+
+  </div>
+
+</div>
 
       {/* PRAYER GRID */}
       <div className="prayer-grid">
@@ -206,6 +215,7 @@ function App() {
             >
               <div>
                 <div>{name}</div>
+
                 {name !== "Tahajjud" && (
                   <div>
                     {data.timings[name]}

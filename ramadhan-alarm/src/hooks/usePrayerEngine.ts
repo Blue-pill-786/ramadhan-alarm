@@ -19,56 +19,59 @@ export default function usePrayerEngine(
   useEffect(() => {
     if (!timings) return;
 
-    const build = (time: string) => {
-      const [h, m] = time.split(":").map(Number);
-      const d = new Date();
-      d.setHours(h, m, 0, 0);
-      return d;
-    };
-
     const calculate = () => {
       const now = new Date();
 
-      // ---------- Build today's base times ----------
-      const todayFajr = build(timings.Fajr);
+      // ---------- Detect Islamic base day ----------
+      const tempFajr = new Date();
+      const [fh, fm] = timings.Fajr.split(":").map(Number);
+      tempFajr.setHours(fh, fm, 0, 0);
+
+      const baseDate = new Date(now);
+      if (now < tempFajr) {
+        baseDate.setDate(baseDate.getDate() - 1);
+      }
+
+      // ---------- Build helper ----------
+      const build = (time: string) => {
+        const [h, m] = time.split(":").map(Number);
+        const d = new Date(baseDate);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+
+      // ---------- Build timeline ----------
+      const fajr = build(timings.Fajr);
       const dhuhr = build(timings.Dhuhr);
       const asr = build(timings.Asr);
       const maghrib = build(timings.Maghrib);
       const isha = build(timings.Isha);
 
-      // ---------- Ensure strict chronological order ----------
-      if (dhuhr <= todayFajr) dhuhr.setDate(dhuhr.getDate() + 1);
+      // Ensure strict order
+      if (dhuhr <= fajr) dhuhr.setDate(dhuhr.getDate() + 1);
       if (asr <= dhuhr) asr.setDate(asr.getDate() + 1);
       if (maghrib <= asr) maghrib.setDate(maghrib.getDate() + 1);
       if (isha <= maghrib) isha.setDate(isha.getDate() + 1);
 
-      // ---------- Compute next Fajr ----------
-      let nextFajr = build(timings.Fajr);
-      if (now >= nextFajr) {
-        nextFajr.setDate(nextFajr.getDate() + 1);
-      }
+      const nextFajr = new Date(fajr);
+      nextFajr.setDate(nextFajr.getDate() + 1);
 
-      // ---------- Night calculation ----------
-      let nightStart = new Date(maghrib);
-      if (now < maghrib) {
-        nightStart.setDate(nightStart.getDate() - 1);
-      }
-
+      // ---------- Night & Tahajjud ----------
       const nightDuration =
-        nextFajr.getTime() - nightStart.getTime();
+        nextFajr.getTime() - maghrib.getTime();
 
       const tahajjudStart = new Date(
-        nightStart.getTime() + (2 / 3) * nightDuration
+        maghrib.getTime() + (2 / 3) * nightDuration
       );
 
-      // ---------- Determine current & next prayer ----------
+      // ---------- Current Prayer ----------
       let current: PrayerName = "Isha";
       let next: PrayerName = "Fajr";
 
       if (now >= tahajjudStart && now < nextFajr) {
         current = "Tahajjud";
         next = "Fajr";
-      } else if (now >= todayFajr && now < dhuhr) {
+      } else if (now >= fajr && now < dhuhr) {
         current = "Fajr";
         next = "Dhuhr";
       } else if (now >= dhuhr && now < asr) {
@@ -85,13 +88,12 @@ export default function usePrayerEngine(
         next = "Tahajjud";
       }
 
-      // ---------- Fasting state ----------
+      // ---------- Fasting ----------
       const isFasting =
         current === "Fajr" ||
         current === "Dhuhr" ||
         current === "Asr";
 
-      // ---------- Sehri / Iftar target ----------
       const target = isFasting ? maghrib : nextFajr;
 
       const diff = Math.max(
@@ -103,9 +105,9 @@ export default function usePrayerEngine(
       const minutes = Math.floor((diff % 3600000) / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
 
-      // ---------- Prayer Progress (remaining based) ----------
+      // ---------- Progress Timeline ----------
       const timeline = [
-        { name: "Fajr" as PrayerName, date: todayFajr },
+        { name: "Fajr" as PrayerName, date: fajr },
         { name: "Dhuhr" as PrayerName, date: dhuhr },
         { name: "Asr" as PrayerName, date: asr },
         { name: "Maghrib" as PrayerName, date: maghrib },
@@ -141,10 +143,8 @@ export default function usePrayerEngine(
         }
       });
 
-      // ---------- Main ring progress ----------
-      const startTime = isFasting
-        ? todayFajr
-        : isha;
+      // ---------- Main Ring ----------
+      const startTime = isFasting ? fajr : isha;
 
       const totalDuration =
         target.getTime() - startTime.getTime();

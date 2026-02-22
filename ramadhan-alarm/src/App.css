@@ -291,3 +291,24 @@ html, body {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+.main-rings-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3rem;
+  flex-wrap: wrap; /* responsive fallback */
+  margin-top: 2rem;
+}
+
+.ring-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ring-subtext {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
