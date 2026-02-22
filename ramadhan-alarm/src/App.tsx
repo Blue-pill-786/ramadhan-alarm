@@ -55,16 +55,23 @@ function App() {
   ========================= */
 
   if (!location) {
-    return (
-      <div className="app-container sky-isha">
-        <div className="content-wrapper">
-          <div className="state-message">
-            Waiting for location permission…
-          </div>
+  return (
+    <div className="app-container sky-isha">
+      <div className="content-wrapper waiting-wrapper">
+        <div className="loader-ring"></div>
+
+        <div className="state-message animated-text">
+          Waiting for location permission
+          <span className="dots">
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+          </span>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   /* =========================
      ERROR STATE
