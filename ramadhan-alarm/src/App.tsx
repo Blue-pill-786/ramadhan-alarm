@@ -1,145 +1,181 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import useGeolocation from "./hooks/useGeolocation";
 import usePrayerEngine from "./hooks/usePrayerEngine";
 import { fetchPrayerTimes } from "./services/prayerService";
 import { PRAYER_NAMES } from "./types/prayer";
 import type { PrayerData } from "./types/prayer";
-import PrayerRing from "./components/PrayerRing";
-import MainRing from "./components/MainRing";
+import CircularProgress from "./components/CircularProgress";
 import "./App.css";
 
 function App() {
   const location = useGeolocation();
-  const [data, setData] = useState<PrayerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] =
+    useState<PrayerData | null>(null);
+  const [error, setError] =
+    useState<boolean>(false);
 
-  // Fetch prayer data
+  // Fetch data
   useEffect(() => {
-    if (!location) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
+    if (!location) return;
 
     fetchPrayerTimes(location.lat, location.lon)
-      .then(setData)
-      .catch(() => setError("Unable to fetch prayer timings"))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        setData(res);
+        setError(false);
+      })
+      .catch(() => {
+        setError(true);
+        setData(null);
+      });
   }, [location]);
 
-  const engine = usePrayerEngine(data?.timings ?? null);
+  const engine = usePrayerEngine(
+    data?.timings ?? null
+  );
 
-  // Dynamic sky theme class
-  const skyClass = engine
-    ? `sky-${engine.currentPrayer.toLowerCase()}`
-    : "sky-isha";
+  /* =========================
+     LOADING STATE
+  ========================= */
 
-  // Gregorian date
-  const gregorianDate = useMemo(() => {
-    return new Date().toLocaleDateString(undefined, {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
-  }, []);
+  if (!location) {
+    return (
+      <div className="app-container sky-isha">
+        <div className="content-wrapper">
+          <div className="state-message">
+            Waiting for location permission...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || !engine) {
+    return (
+      <div className="app-container sky-isha">
+        <div className="content-wrapper">
+
+          <div className="header">
+            <h1>🌙 Ramadhan Dashboard</h1>
+          </div>
+
+          <div className="main-ring-section">
+            <div className="skeleton skeleton-circle"></div>
+          </div>
+
+          <div className="prayer-grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="prayer-card skeleton skeleton-card"
+              />
+            ))}
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app-container sky-isha">
+        <div className="content-wrapper">
+          <div className="state-message error">
+            Unable to fetch prayer timings.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* =========================
+     MAIN UI
+  ========================= */
+
+  const skyClass = `sky-${engine.currentPrayer.toLowerCase()}`;
 
   const isRamadan =
-    data?.hijri.month.toLowerCase() === "ramadan";
+    data.hijri.month.toLowerCase() === "ramadan";
 
   return (
     <div className={`app-container ${skyClass}`}>
-      {/* HEADER */}
-      <header className="header">
-        <h1>🌙 Ramadhan Dashboard</h1>
+      <div className="content-wrapper">
 
-        <p className="gregorian-date">
-          {gregorianDate}
-        </p>
+        {/* HEADER */}
+        <div className="header">
+          <h1>🌙 Ramadhan Dashboard</h1>
 
-        {data && (
-          <p className="hijri-date">
+          <p>
             {data.hijri.day} {data.hijri.month}{" "}
             {data.hijri.year} AH
           </p>
-        )}
 
-        {isRamadan && data && (
-          <p className="ramadan-badge">
-            🌙 Ramadan Day {data.hijri.day}
+          {isRamadan && (
+            <p>Ramadan Day {data.hijri.day}</p>
+          )}
+        </div>
+
+        {/* MAIN COUNTDOWN */}
+        <div className="main-ring-section">
+          <h3>
+            {engine.isFasting
+              ? "🌇 Iftar Countdown"
+              : "🌅 Sehri Countdown"}
+          </h3>
+
+          <CircularProgress
+            percentage={engine.mainProgress}
+            size={170}
+            strokeWidth={12}
+            color={
+              engine.isFasting
+                ? "#f97316"
+                : "#22d3ee"
+            }
+          >
+            <div>
+              <div>{engine.timeLeft}</div>
+            </div>
+          </CircularProgress>
+
+          <p>
+            Tahajjud starts at {engine.tahajjudTime}
           </p>
-        )}
-      </header>
-
-      {/* LOADING */}
-      {loading && (
-        <div className="state-message">
-          Fetching prayer timings...
         </div>
-      )}
 
-      {/* ERROR */}
-      {error && (
-        <div className="state-message error">
-          {error}
-        </div>
-      )}
+        {/* PRAYER GRID */}
+        <div className="prayer-grid">
+          {PRAYER_NAMES.map((name) => (
+            <div
+              key={name}
+              className={`prayer-card ${
+                engine.currentPrayer === name
+                  ? "active"
+                  : ""
+              }`}
+            >
+              <CircularProgress
+                percentage={
+                  engine.prayerProgress[name] ?? 0
+                }
+                size={90}
+                strokeWidth={6}
+              >
+                <div>
+                  <div>{name}</div>
 
-      {/* MAIN CONTENT */}
-      {!loading && !error && data && engine && (
-        <>
-          {/* MAIN COUNTDOWN */}
-          <section className="main-ring-section">
-            <h3>
-              {engine.isFasting
-                ? "🌇 Iftar Countdown"
-                : "🌅 Sehri Countdown"}
-            </h3>
-
-            <MainRing
-              percentage={engine.mainProgress}
-              isIftar={engine.isFasting}
-            />
-
-            <p className="main-countdown">
-              {engine.timeLeft}
-            </p>
-          </section>
-
-          {/* PRAYER GRID */}
-          <section className="prayer-grid">
-            {PRAYER_NAMES.map((name) => {
-              const isActive =
-                engine.currentPrayer === name;
-
-              return (
-                <div
-                  key={name}
-                  className={`prayer-card ${
-                    isActive ? "active" : ""
-                  }`}
-                >
-                  <PrayerRing
-                    percentage={
-                      engine.prayerProgress[name] ?? 0
-                    }
-                  >
-                    <div className="prayer-name">
-                      {name}
-                    </div>
-                    <div className="prayer-time">
+                  {name !== "Tahajjud" && (
+                    <div>
                       {data.timings[name]}
                     </div>
-                  </PrayerRing>
+                  )}
                 </div>
-              );
-            })}
-          </section>
-        </>
-      )}
+              </CircularProgress>
+            </div>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }

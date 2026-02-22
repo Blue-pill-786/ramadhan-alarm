@@ -7,11 +7,10 @@ export async function fetchPrayerTimes(
   const today = new Date();
 
   const res = await fetch(
-    `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}?latitude=${lat}&longitude=${lon}&method=2`
+    `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}?latitude=${lat}&longitude=${lon}&method=2&adjustment=1`
   );
 
   const json = await res.json();
-
   const { timings, date } = json.data;
 
   return {

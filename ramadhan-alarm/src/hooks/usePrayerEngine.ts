@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import type { Timings, PrayerName } from "../types/prayer";
 import { PRAYER_NAMES } from "../types/prayer";
-import type { PrayerName, Timings } from "../types/prayer";
 
 interface EngineResult {
   currentPrayer: PrayerName;
@@ -9,12 +9,14 @@ interface EngineResult {
   prayerProgress: Record<PrayerName, number>;
   mainProgress: number;
   isFasting: boolean;
+  tahajjudTime: string;
 }
 
 export default function usePrayerEngine(
   timings: Timings | null
 ): EngineResult | null {
-  const [state, setState] = useState<EngineResult | null>(null);
+  const [state, setState] =
+    useState<EngineResult | null>(null);
 
   useEffect(() => {
     if (!timings) return;
@@ -22,13 +24,43 @@ export default function usePrayerEngine(
     const interval = setInterval(() => {
       const now = new Date();
 
-      const prayers = PRAYER_NAMES.map(name => {
-        const [h, m] = timings[name].split(":").map(Number);
+      const basePrayers = [
+        { name: "Fajr", time: timings.Fajr },
+        { name: "Dhuhr", time: timings.Dhuhr },
+        { name: "Asr", time: timings.Asr },
+        { name: "Maghrib", time: timings.Maghrib },
+        { name: "Isha", time: timings.Isha }
+      ];
+
+      const prayers = basePrayers.map(p => {
+        const [h, m] = p.time.split(":").map(Number);
         const date = new Date();
         date.setHours(h, m, 0, 0);
-        return { name, date };
+        return { name: p.name, date };
       });
 
+      // Tahajjud = last third of night
+      const maghrib = prayers.find(p => p.name === "Maghrib")!.date;
+      let fajr = prayers.find(p => p.name === "Fajr")!.date;
+
+      if (fajr <= maghrib) {
+        fajr = new Date(fajr);
+        fajr.setDate(fajr.getDate() + 1);
+      }
+
+      const nightDuration =
+        fajr.getTime() - maghrib.getTime();
+
+      const tahajjudStart = new Date(
+        maghrib.getTime() + (2 / 3) * nightDuration
+      );
+
+      prayers.push({
+        name: "Tahajjud",
+        date: tahajjudStart
+      });
+
+      // Determine current & next
       let current: PrayerName = "Isha";
       let next: PrayerName = "Fajr";
 
@@ -38,7 +70,9 @@ export default function usePrayerEngine(
 
         if (now >= p.date && (!nextP || now < nextP.date)) {
           current = p.name as PrayerName;
-          next = nextP ? (nextP.name as PrayerName) : "Fajr";
+          next = nextP
+            ? (nextP.name as PrayerName)
+            : "Fajr";
           break;
         }
       }
@@ -46,40 +80,27 @@ export default function usePrayerEngine(
       const isFasting =
         ["Fajr", "Dhuhr", "Asr"].includes(current);
 
-      let startDate: Date;
-      let targetDate: Date;
+      let target = isFasting ? maghrib : fajr;
 
-      if (isFasting) {
-        startDate = prayers.find(p => p.name === "Fajr")!.date;
-        targetDate = prayers.find(p => p.name === "Maghrib")!.date;
-      } else {
-        startDate = prayers.find(p => p.name === "Isha")!.date;
-        targetDate = prayers.find(p => p.name === "Fajr")!.date;
-
-        if (now > targetDate) {
-          targetDate = new Date(targetDate);
-          targetDate.setDate(targetDate.getDate() + 1);
-        }
+      if (!isFasting && now > fajr) {
+        target = new Date(fajr);
+        target.setDate(target.getDate() + 1);
       }
 
       const diff = Math.max(
         0,
-        targetDate.getTime() - now.getTime()
+        target.getTime() - now.getTime()
       );
 
       const hours = Math.floor(diff / 3600000);
-      const minutes = Math.floor(
-        (diff % 3600000) / 60000
-      );
-      const seconds = Math.floor(
-        (diff % 60000) / 1000
-      );
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
 
       const prayerProgress =
         {} as Record<PrayerName, number>;
 
-      prayers.forEach((p, index) => {
-        const nextP = prayers[index + 1];
+      prayers.forEach((p, i) => {
+        const nextP = prayers[i + 1];
 
         if (now < p.date) {
           prayerProgress[p.name as PrayerName] = 0;
@@ -95,30 +116,18 @@ export default function usePrayerEngine(
         }
       });
 
-      const totalDuration =
-        targetDate.getTime() - startDate.getTime();
-
-      const elapsedDuration =
-        now.getTime() - startDate.getTime();
-
-      const mainProgress =
-        totalDuration > 0
-          ? Math.min(
-              100,
-              Math.max(
-                0,
-                (elapsedDuration / totalDuration) * 100
-              )
-            )
-          : 0;
-
       setState({
         currentPrayer: current,
         nextPrayer: next,
         timeLeft: `${hours}h ${minutes}m ${seconds}s`,
         prayerProgress,
-        mainProgress,
-        isFasting
+        mainProgress:
+          nightDuration > 0
+            ? (1 - diff / nightDuration) * 100
+            : 0,
+        isFasting,
+        tahajjudTime:
+          tahajjudStart.toTimeString().slice(0, 5)
       });
     }, 1000);
 

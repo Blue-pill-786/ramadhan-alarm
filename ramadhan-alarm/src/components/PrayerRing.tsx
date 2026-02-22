@@ -1,31 +1,31 @@
+import { ReactNode } from "react";
+
 interface Props {
   percentage: number;
-  children?: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function PrayerRing({
   percentage,
   children
 }: Props) {
-  const size = 90;
-  const stroke = 6;
-  const radius = size / 2 - stroke;
-  const circumference = radius * 2 * Math.PI;
-
-  const safe = Math.min(Math.max(percentage, 0), 100);
+  const radius = 35;
+  const stroke = 5;
+  const normalized = radius - stroke;
+  const circumference = normalized * 2 * Math.PI;
   const offset =
-    circumference - (safe / 100) * circumference;
+    circumference - (percentage / 100) * circumference;
 
   return (
     <div className="ring-wrapper">
-      <svg width={size} height={size}>
+      <svg width={70} height={70}>
         <circle
-          stroke="#1e293b"
+          stroke="rgba(255,255,255,0.15)"
           fill="transparent"
           strokeWidth={stroke}
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
+          r={normalized}
+          cx={radius}
+          cy={radius}
         />
         <circle
           stroke="#34d399"
@@ -34,11 +34,11 @@ export default function PrayerRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          r={radius}
-          cx={size / 2}
-          cy={size / 2}
+          r={normalized}
+          cx={radius}
+          cy={radius}
           style={{
-            transition: "stroke-dashoffset 1s linear"
+            transition: "stroke-dashoffset 0.8s ease"
           }}
         />
       </svg>

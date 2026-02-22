@@ -1,40 +1,56 @@
 interface Props {
   percentage: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  children?: React.ReactNode;
 }
 
-export default function CircularProgress({ percentage }: Props) {
-  const radius = 70;
-  const stroke = 10;
-  const normalizedRadius = radius - stroke;
-  const circumference = normalizedRadius * 2 * Math.PI;
+export default function CircularProgress({
+  percentage,
+  size = 100,
+  strokeWidth = 8,
+  color = "#34d399",
+  children
+}: Props) {
 
-  const safePercentage = Math.min(Math.max(percentage, 0), 100);
+  const radius = size / 2;
+  const normalizedRadius = radius - strokeWidth;
+  const circumference =
+    normalizedRadius * 2 * Math.PI;
+
+  const safePercentage = Math.min(
+    Math.max(percentage, 0),
+    100
+  );
 
   const offset =
-    circumference - (safePercentage / 100) * circumference;
+    circumference -
+    (safePercentage / 100) * circumference;
 
   return (
     <div
       className="ring-wrapper"
+      style={{ width: size, height: size }}
     >
       <svg
-        height={radius * 2}
-        width={radius * 2}
+        height={size}
+        width={size}
         style={{ transform: "rotate(-90deg)" }}
       >
         <circle
-          stroke="#1e293b"
+          stroke="rgba(255,255,255,0.1)"
           fill="transparent"
-          strokeWidth={stroke}
+          strokeWidth={strokeWidth}
           r={normalizedRadius}
           cx={radius}
           cy={radius}
         />
 
         <circle
-          stroke="#34d399"
+          stroke={color}
           fill="transparent"
-          strokeWidth={stroke}
+          strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -42,11 +58,15 @@ export default function CircularProgress({ percentage }: Props) {
           cx={radius}
           cy={radius}
           style={{
-            transition: "stroke-dashoffset 1s linear",
-            filter: "drop-shadow(0 0 8px rgba(52, 211, 153, 0.6))"
+            transition: "stroke-dashoffset 1s linear"
           }}
         />
       </svg>
+
+      {/* THIS IS WHAT YOU WERE MISSING */}
+      <div className="ring-center">
+        {children}
+      </div>
     </div>
   );
 }

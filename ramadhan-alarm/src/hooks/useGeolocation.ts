@@ -8,9 +8,40 @@ export interface Location {
 }
 
 export default function useGeolocation(): Location | null {
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] =
+    useState<Location | null>(null);
 
   useEffect(() => {
+    let resolved = false;
+
+    const fallbackToIP = async () => {
+      try {
+        const ipLocation =
+          await fetchIPLocation();
+
+        setLocation({
+          lat: ipLocation.latitude,
+          lon: ipLocation.longitude,
+          city: ipLocation.city
+        });
+
+        resolved = true;
+      } catch (err) {
+        console.error(
+          "IP fallback failed.",
+          err
+        );
+
+        // 🌍 FINAL HARD FALLBACK (India default)
+        setLocation({
+          lat: 19.0760, // Mumbai
+          lon: 72.8777
+        });
+
+        resolved = true;
+      }
+    };
+
     if (!navigator.geolocation) {
       fallbackToIP();
       return;
@@ -18,13 +49,16 @@ export default function useGeolocation(): Location | null {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (resolved) return;
+
         setLocation({
           lat: position.coords.latitude,
           lon: position.coords.longitude
         });
+
+        resolved = true;
       },
-      async () => {
-        // If GPS fails → fallback to IP
+      () => {
         fallbackToIP();
       },
       {
@@ -33,19 +67,6 @@ export default function useGeolocation(): Location | null {
         maximumAge: 0
       }
     );
-
-    async function fallbackToIP() {
-      try {
-        const ipLocation = await fetchIPLocation();
-        setLocation({
-          lat: ipLocation.latitude,
-          lon: ipLocation.longitude,
-          city: ipLocation.city
-        });
-      } catch {
-        console.error("IP location fallback failed.");
-      }
-    }
   }, []);
 
   return location;
