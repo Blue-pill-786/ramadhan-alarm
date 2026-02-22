@@ -11,14 +11,14 @@ interface EngineResult {
   tahajjudTime: string;
 }
 
-const PRAYERS: PrayerName[] = [
-  "Fajr",
-  "Dhuhr",
-  "Asr",
-  "Maghrib",
-  "Isha",
-  "Tahajjud"
-];
+// const PRAYERS: PrayerName[] = [
+//   "Fajr",
+//   "Dhuhr",
+//   "Asr",
+//   "Maghrib",
+//   "Isha",
+//   "Tahajjud"
+// ];
 
 export default function usePrayerEngine(
   timings: Timings | null
