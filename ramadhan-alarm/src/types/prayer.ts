@@ -1,14 +1,22 @@
+export const PRAYER_NAMES = [
+  "Fajr",
+  "Dhuhr",
+  "Asr",
+  "Maghrib",
+  "Isha"
+] as const;
+
+export type PrayerName = typeof PRAYER_NAMES[number];
+
+export type Timings = Record<PrayerName, string>;
+
+export interface HijriDate {
+  day: string;
+  month: string;
+  year: string;
+}
+
 export interface PrayerData {
-  timings: {
-    Fajr: string;
-    Dhuhr: string;
-    Asr: string;
-    Maghrib: string;
-    Isha: string;
-  };
-  hijri: {
-    day: string;
-    month: { en: string };
-    year: string;
-  };
+  timings: Timings;
+  hijri: HijriDate;
 }

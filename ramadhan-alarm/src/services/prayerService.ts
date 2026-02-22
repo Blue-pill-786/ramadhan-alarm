@@ -1,33 +1,31 @@
-import axios from "axios";
 import type { PrayerData } from "../types/prayer";
 
-export const fetchPrayerTimes = async (
+export async function fetchPrayerTimes(
   lat: number,
   lon: number
-): Promise<PrayerData> => {
-  const date = new Date().toISOString().split("T")[0];
+): Promise<PrayerData> {
+  const today = new Date();
 
-  const response = await axios.get(
-    `https://api.aladhan.com/v1/timings/${date}`,
-    {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        method: 1
-      }
-    }
+  const res = await fetch(
+    `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}?latitude=${lat}&longitude=${lon}&method=2`
   );
 
-  const cleanTimings = response.data.data.timings;
+  const json = await res.json();
+
+  const { timings, date } = json.data;
 
   return {
     timings: {
-      Fajr: cleanTimings.Fajr.split(" ")[0],
-      Dhuhr: cleanTimings.Dhuhr.split(" ")[0],
-      Asr: cleanTimings.Asr.split(" ")[0],
-      Maghrib: cleanTimings.Maghrib.split(" ")[0],
-      Isha: cleanTimings.Isha.split(" ")[0],
+      Fajr: timings.Fajr.split(" ")[0],
+      Dhuhr: timings.Dhuhr.split(" ")[0],
+      Asr: timings.Asr.split(" ")[0],
+      Maghrib: timings.Maghrib.split(" ")[0],
+      Isha: timings.Isha.split(" ")[0]
     },
-    hijri: response.data.data.date.hijri
+    hijri: {
+      day: date.hijri.day,
+      month: date.hijri.month.en,
+      year: date.hijri.year
+    }
   };
-};
+}

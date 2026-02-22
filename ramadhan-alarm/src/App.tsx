@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import useGeolocation from "./hooks/useGeolocation";
-import { fetchPrayerTimes } from "./services/prayerService";
 import usePrayerEngine from "./hooks/usePrayerEngine";
+import { fetchPrayerTimes } from "./services/prayerService";
+import { PRAYER_NAMES } from "./types/prayer";
+import type { PrayerData } from "./types/prayer";
 import PrayerRing from "./components/PrayerRing";
 import MainRing from "./components/MainRing";
-import { useEffect, useState } from "react";
-import type { PrayerData } from "./types/prayer";
 import "./App.css";
 
 function App() {
@@ -12,80 +13,95 @@ function App() {
   const [data, setData] = useState<PrayerData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch prayer + hijri data
   useEffect(() => {
-    if (location) {
-      setLoading(true);
-      fetchPrayerTimes(location.lat, location.lon)
-        .then((res) => setData(res))
-        .finally(() => setLoading(false));
-    }
+    if (!location) return;
+
+    setLoading(true);
+
+    fetchPrayerTimes(location.lat, location.lon)
+      .then((res) => setData(res))
+      .finally(() => setLoading(false));
   }, [location]);
 
   const engine = usePrayerEngine(data?.timings ?? null);
 
-  const isFasting =
-    engine &&
-    ["Fajr", "Dhuhr", "Asr"].includes(engine.currentPrayer);
+  if (loading) {
+    return (
+      <div className="app-container">
+        <h1>🌙 Ramadhan Dashboard</h1>
+        <p className="loading">Fetching prayer timings...</p>
+      </div>
+    );
+  }
+
+  if (!data || !engine) {
+    return (
+      <div className="app-container">
+        <h1>🌙 Ramadhan Dashboard</h1>
+        <p className="loading">
+          Unable to load data.
+        </p>
+      </div>
+    );
+  }
+
+  const isRamadan =
+    data.hijri.month === "Ramadan";
 
   return (
     <div className="app-container">
-      <h1 className="app-title">🌙 Ramadhan Dashboard</h1>
+      {/* Header */}
+      <div className="header">
+        <h1>🌙 Ramadhan Dashboard</h1>
 
-      {loading && (
-        <div className="skeleton-wrapper">
-          <div className="skeleton-main-ring" />
-          <div className="skeleton-grid">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="skeleton-card" />
-            ))}
-          </div>
-        </div>
-      )}
+        <p className="hijri-date">
+          {data.hijri.day} {data.hijri.month}{" "}
+          {data.hijri.year} AH
+        </p>
 
-      {!loading && data && engine && (
-        <>
-          <div className="main-ring-section">
-            <h3 className="section-title">
-              {isFasting
-                ? "🌇 Iftar Countdown"
-                : "🌅 Sehri Countdown"}
-            </h3>
+        {isRamadan && (
+          <p className="ramadan-badge">
+            🌙 Ramadan Day {data.hijri.day}
+          </p>
+        )}
+      </div>
 
-            <MainRing
-              percentage={engine.mainProgress}
-              isIftar={isFasting}
-            />
+      {/* Main Iftar / Sehri Countdown */}
+      <div className="main-ring-section">
+        <h3>
+          {engine.isFasting
+            ? "🌇 Iftar Countdown"
+            : "🌅 Sehri Countdown"}
+        </h3>
 
-            <p
-              key={engine.timeLeft}
-              className="main-countdown fade-change"
+        <MainRing
+          percentage={engine.mainProgress}
+          isIftar={engine.isFasting}
+        />
+
+        <p className="main-countdown">
+          {engine.timeLeft}
+        </p>
+      </div>
+
+      {/* Prayer Grid */}
+      <div className="prayer-grid">
+        {PRAYER_NAMES.map((name) => (
+          <div key={name} className="prayer-card">
+            <PrayerRing
+              percentage={engine.prayerProgress[name]}
             >
-              {engine.timeLeft}
-            </p>
+              <div className="prayer-name">
+                {name}
+              </div>
+              <div className="prayer-time">
+                {data.timings[name]}
+              </div>
+            </PrayerRing>
           </div>
-
-          <div className="prayer-grid">
-            {["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].map(
-              (name) => (
-                <div key={name} className="prayer-card">
-                  <PrayerRing
-                    percentage={
-                      engine.prayerProgress[name] || 0
-                    }
-                  >
-                    <div className="prayer-name">
-                      {name}
-                    </div>
-                    <div className="prayer-time">
-                      {data.timings[name]}
-                    </div>
-                  </PrayerRing>
-                </div>
-              )
-            )}
-          </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
