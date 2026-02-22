@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useGeolocation from "./hooks/useGeolocation";
 import usePrayerEngine from "./hooks/usePrayerEngine";
 import { fetchPrayerTimes } from "./services/prayerService";
@@ -9,32 +9,49 @@ import "./App.css";
 
 function App() {
   const location = useGeolocation();
-  const [data, setData] =
-    useState<PrayerData | null>(null);
-  const [error, setError] =
-    useState<boolean>(false);
 
-  // Fetch data
+  const [data, setData] = useState<PrayerData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /* =========================
+     FETCH PRAYER DATA
+  ========================= */
+
   useEffect(() => {
     if (!location) return;
+
+    setLoading(true);
+    setError(null);
 
     fetchPrayerTimes(location.lat, location.lon)
       .then((res) => {
         setData(res);
-        setError(false);
       })
       .catch(() => {
-        setError(true);
-        setData(null);
+        setError("Unable to fetch prayer timings.");
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [location]);
 
-  const engine = usePrayerEngine(
-    data?.timings ?? null
-  );
+  const engine = usePrayerEngine(data?.timings ?? null);
 
   /* =========================
-     LOADING STATE
+     DERIVED VALUES
+  ========================= */
+
+  const skyClass = useMemo(() => {
+    if (!engine) return "sky-isha";
+    return `sky-${engine.currentPrayer.toLowerCase()}`;
+  }, [engine]);
+
+  const isRamadan =
+    data?.hijri?.month?.toLowerCase() === "ramadan";
+
+  /* =========================
+     LOCATION WAIT STATE
   ========================= */
 
   if (!location) {
@@ -42,24 +59,43 @@ function App() {
       <div className="app-container sky-isha">
         <div className="content-wrapper">
           <div className="state-message">
-            Waiting for location permission...
+            Waiting for location permission…
           </div>
         </div>
       </div>
     );
   }
 
-  if (!data || !engine) {
+  /* =========================
+     ERROR STATE
+  ========================= */
+
+  if (error) {
     return (
       <div className="app-container sky-isha">
         <div className="content-wrapper">
+          <div className="state-message error">
+            {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  /* =========================
+     LOADING STATE
+  ========================= */
+
+  if (loading || !data || !engine) {
+    return (
+      <div className="app-container sky-isha">
+        <div className="content-wrapper">
           <div className="header">
             <h1>🌙 Ramadhan Dashboard</h1>
           </div>
 
           <div className="main-ring-section">
-            <div className="skeleton skeleton-circle"></div>
+            <div className="skeleton skeleton-circle" />
           </div>
 
           <div className="prayer-grid">
@@ -70,19 +106,6 @@ function App() {
               />
             ))}
           </div>
-
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="app-container sky-isha">
-        <div className="content-wrapper">
-          <div className="state-message error">
-            Unable to fetch prayer timings.
-          </div>
         </div>
       </div>
     );
@@ -92,15 +115,10 @@ function App() {
      MAIN UI
   ========================= */
 
-  const skyClass = `sky-${engine.currentPrayer.toLowerCase()}`;
-
-  const isRamadan =
-    data.hijri.month.toLowerCase() === "ramadan";
-
   return (
     <div className={`app-container ${skyClass}`}>
       <div className="content-wrapper">
-
+        
         {/* HEADER */}
         <div className="header">
           <h1>🌙 Ramadhan Dashboard</h1>
@@ -163,7 +181,6 @@ function App() {
               >
                 <div>
                   <div>{name}</div>
-
                   {name !== "Tahajjud" && (
                     <div>
                       {data.timings[name]}

@@ -1,78 +1,96 @@
 /* =========================
-   GLOBAL
+   GLOBAL RESET
 ========================= */
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
   margin: 0;
   padding: 0;
-  background: #6d7fa8;
+  width: 100%;
+  min-height: 100%;
+  font-family: "Inter", system-ui, sans-serif;
+  background: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 #root {
+  min-height: 100svh;
   width: 100%;
-  min-height: 100vh;
+  display: flex;
 }
 
-/* Container */
+/* =========================
+   APP CONTAINER
+========================= */
+
 .app-container {
+  flex: 1;
   width: 100%;
-  min-height: 100vh;
-  padding: 2rem 1.2rem 3rem;
+  min-height: 100svh;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  display: flex;
+  justify-content: center;
+  transition: background 1.5s ease;
+  position: relative;
+}
+
+/* Content wrapper controls layout width */
+.content-wrapper {
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
-
   align-items: center;
-  position: relative;
-  animation: fadeIn 0.7s ease forwards;
-  transition: background 1.8s ease-in-out;
 }
 
-/* Animated ambient glow */
+/* Ambient glow */
 .app-container::before {
   content: "";
   position: fixed;
-  width: 600px;
-  height: 600px;
+  width: 60vw;
+  height: 60vw;
+  max-width: 700px;
+  max-height: 700px;
   background: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.06),
+    rgba(255,255,255,0.05),
     transparent 70%
   );
-  top: -200px;
-  right: -200px;
+  top: -20%;
+  right: -20%;
   filter: blur(120px);
-  animation: floatGlow 10s ease-in-out infinite;
+  animation: floatGlow 12s ease-in-out infinite;
   pointer-events: none;
 }
 
 /* =========================
-   SKY THEMES (Richer)
+   SKY THEMES
 ========================= */
 
 .sky-fajr {
-  background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+  background: linear-gradient(180deg, #1e3a8a, #0f172a);
 }
 
 .sky-dhuhr {
-  background: linear-gradient(180deg, #facc15 0%, #f97316 100%);
+  background: linear-gradient(180deg, #facc15, #f97316);
 }
 
 .sky-asr {
-  background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+  background: linear-gradient(180deg, #fb923c, #ea580c);
 }
 
 .sky-maghrib {
-  background: linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%);
+  background: linear-gradient(180deg, #7c3aed, #4c1d95);
 }
 
 .sky-isha {
-  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  background: linear-gradient(180deg, #0f172a, #020617);
 }
 
 /* =========================
@@ -81,20 +99,16 @@ html, body {
 
 .header {
   text-align: center;
-  margin-bottom: 2.5rem;
-  animation: slideDown 0.6s ease;
+  margin-bottom: clamp(1.5rem, 3vw, 3rem);
 }
 
 .header h1 {
-  font-size: 2.1rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.4rem;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  margin-bottom: 0.5rem;
 }
 
 .header p {
-  margin: 0.2rem 0;
-  font-size: 0.9rem;
+  font-size: clamp(0.85rem, 2vw, 1rem);
   opacity: 0.85;
 }
 
@@ -104,41 +118,37 @@ html, body {
 
 .main-ring-section {
   width: 100%;
-  max-width: 420px;
+  max-width: 650px;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border-radius: 28px;
   text-align: center;
-  margin-bottom: 2.2rem;
-  padding: 2.2rem;
-  border-radius: 24px;
 
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255,255,255,0.08);
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-
   border: 1px solid rgba(255,255,255,0.08);
 
   box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.45),
+    0 25px 60px rgba(0,0,0,0.5),
     inset 0 1px 0 rgba(255,255,255,0.05);
 
-  transition: all 0.35s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .main-ring-section:hover {
   transform: translateY(-6px);
   box-shadow:
-    0 30px 70px rgba(0, 0, 0, 0.6),
+    0 35px 80px rgba(0,0,0,0.6),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .main-ring-section h3 {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
   margin-bottom: 1.2rem;
-  font-weight: 600;
-  letter-spacing: 0.4px;
 }
 
 .main-ring-section p {
   margin-top: 1rem;
-  font-size: 1.25rem;
+  font-size: clamp(1rem, 2.8vw, 1.3rem);
   font-weight: 600;
 }
 
@@ -148,58 +158,49 @@ html, body {
 
 .prayer-grid {
   width: 100%;
-  max-width: 420px;
+  margin-top: clamp(1.5rem, 3vw, 3rem);
+
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.2rem;
+  gap: clamp(0.8rem, 2vw, 1.5rem);
+
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(150px, 1fr)
+  );
 }
 
 /* =========================
-   PRAYER CARDS
+   PRAYER CARD
 ========================= */
 
 .prayer-card {
-  padding: 1.6rem;
-  border-radius: 20px;
+  padding: clamp(1rem, 2vw, 1.6rem);
+  border-radius: 22px;
+  text-align: center;
 
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-
   border: 1px solid rgba(255,255,255,0.06);
 
-  text-align: center;
   transition: all 0.35s ease;
 
   box-shadow:
-    0 10px 25px rgba(0, 0, 0, 0.35),
+    0 15px 30px rgba(0,0,0,0.35),
     inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .prayer-card:hover {
   transform: translateY(-6px) scale(1.03);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255,255,255,0.12);
 }
 
-/* Active prayer glow */
 .prayer-card.active {
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255,255,255,0.35);
   animation: pulseGlow 3s infinite ease-in-out;
 }
 
-.prayer-card div:first-child {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.prayer-card div:last-child {
-  font-size: 0.85rem;
-  opacity: 0.9;
-}
-
 /* =========================
-   RING STYLING
+   RING
 ========================= */
 
 .ring-wrapper {
@@ -212,13 +213,13 @@ html, body {
 .ring-center {
   position: absolute;
   text-align: center;
+  font-size: clamp(0.75rem, 2vw, 0.95rem);
   font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.3px;
+  pointer-events: none;
 }
 
 /* =========================
-   SKELETON (Upgraded)
+   SKELETON
 ========================= */
 
 .skeleton {
@@ -230,44 +231,34 @@ html, body {
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite linear;
-  border-radius: 20px;
+  border-radius: 22px;
 }
 
 .skeleton-circle {
-  width: 160px;
-  height: 160px;
+  width: clamp(120px, 30vw, 220px);
+  height: clamp(120px, 30vw, 220px);
   border-radius: 50%;
   margin: 0 auto;
 }
 
 .skeleton-card {
-  height: 120px;
+  height: clamp(100px, 20vw, 150px);
 }
 
 /* =========================
    ANIMATIONS
 ========================= */
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes floatGlow {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(25px); }
-  100% { transform: translateY(0px); }
+  0% { transform: translateY(0); }
+  50% { transform: translateY(30px); }
+  100% { transform: translateY(0); }
 }
 
 @keyframes pulseGlow {
-  0% { box-shadow: 0 0 12px rgba(255,255,255,0.12); }
-  50% { box-shadow: 0 0 28px rgba(255,255,255,0.35); }
-  100% { box-shadow: 0 0 12px rgba(255,255,255,0.12); }
+  0% { box-shadow: 0 0 12px rgba(255,255,255,0.15); }
+  50% { box-shadow: 0 0 30px rgba(255,255,255,0.4); }
+  100% { box-shadow: 0 0 12px rgba(255,255,255,0.15); }
 }
 
 @keyframes shimmer {

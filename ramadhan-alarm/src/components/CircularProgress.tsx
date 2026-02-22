@@ -6,6 +6,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
+
 export default function CircularProgress({
   percentage,
   size = 100,
