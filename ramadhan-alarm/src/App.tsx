@@ -14,7 +14,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data
+  // Fetch prayer data
   useEffect(() => {
     if (!location) {
       setLoading(false);
@@ -32,13 +32,12 @@ function App() {
 
   const engine = usePrayerEngine(data?.timings ?? null);
 
-  // Derived UI states
-  const isRamadan = useMemo(
-    () =>
-      data?.hijri.month.toLowerCase() === "ramadan",
-    [data]
-  );
+  // Dynamic sky theme class
+  const skyClass = engine
+    ? `sky-${engine.currentPrayer.toLowerCase()}`
+    : "sky-isha";
 
+  // Gregorian date
   const gregorianDate = useMemo(() => {
     return new Date().toLocaleDateString(undefined, {
       weekday: "long",
@@ -48,15 +47,11 @@ function App() {
     });
   }, []);
 
-  const pageState = useMemo(() => {
-    if (loading) return "loading";
-    if (error) return "error";
-    if (!data || !engine) return "empty";
-    return "ready";
-  }, [loading, error, data, engine]);
+  const isRamadan =
+    data?.hijri.month.toLowerCase() === "ramadan";
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${skyClass}`}>
       {/* HEADER */}
       <header className="header">
         <h1>🌙 Ramadhan Dashboard</h1>
@@ -79,22 +74,24 @@ function App() {
         )}
       </header>
 
-      {/* STATE HANDLING */}
-      {pageState === "loading" && (
+      {/* LOADING */}
+      {loading && (
         <div className="state-message">
           Fetching prayer timings...
         </div>
       )}
 
-      {pageState === "error" && (
+      {/* ERROR */}
+      {error && (
         <div className="state-message error">
           {error}
         </div>
       )}
 
-      {pageState === "ready" && data && engine && (
+      {/* MAIN CONTENT */}
+      {!loading && !error && data && engine && (
         <>
-          {/* MAIN COUNTDOWN SECTION */}
+          {/* MAIN COUNTDOWN */}
           <section className="main-ring-section">
             <h3>
               {engine.isFasting
