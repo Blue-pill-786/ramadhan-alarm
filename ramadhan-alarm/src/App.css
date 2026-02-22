@@ -1,0 +1,136 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #0f172a 0%, #020617 70%);
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+  overflow-x: hidden;
+}
+
+/* Star animation */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(white 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.04;
+  animation: starsMove 60s linear infinite;
+  z-index: -1;
+}
+
+@keyframes starsMove {
+  from { transform: translateY(0); }
+  to { transform: translateY(-200px); }
+}
+
+.app-container {
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header {
+  text-align: center;
+}
+
+.header h1 {
+  color: #34d399;
+}
+
+.hijri,
+.ramadan-day {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.section {
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.prayer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+}
+
+.prayer-card {
+  background: #0f172a;
+  padding: 0.8rem;
+  border-radius: 14px;
+  text-align: center;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.prayer-card:hover {
+  transform: translateY(-4px) scale(1.03);
+}
+
+.prayer-card:active {
+  transform: scale(0.95);
+}
+
+.prayer-card.active {
+  background: linear-gradient(135deg, #065f46, #047857);
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 5px rgba(52,211,153,0.4); }
+  50% { box-shadow: 0 0 20px rgba(52,211,153,0.8); }
+  100% { box-shadow: 0 0 5px rgba(52,211,153,0.4); }
+}
+
+.highlight {
+  border: 1px solid rgba(52,211,153,0.4);
+}
+
+.prayer-name {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.prayer-time {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.countdown-time {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 0.6rem;
+  animation: breathe 2s infinite ease-in-out;
+}
+
+@keyframes breathe {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.ring-wrapper {
+  display: flex;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.ring-wrapper:hover {
+  transform: scale(1.08);
+}
+
+.fasting-progress {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
