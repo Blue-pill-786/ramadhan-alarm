@@ -115,86 +115,111 @@ function App() {
      MAIN UI
   ========================= */
 
-  return (
-    <div className={`app-container ${skyClass}`}>
-      <div className="content-wrapper">
-        
-        {/* HEADER */}
-        <div className="header">
-          <h1>🌙 Ramadhan Dashboard</h1>
+ return (
+  <div className={`app-container ${skyClass}`}>
+    <div className="content-wrapper">
 
-          <p>
-            {data.hijri.day} {data.hijri.month}{" "}
-            {data.hijri.year} AH
-          </p>
+      {/* HEADER */}
+      <div className="header">
+        <h1>🌙 Ramadhan Dashboard</h1>
 
-          {isRamadan && (
-            <p>Ramadan Day {data.hijri.day}</p>
-          )}
-        </div>
+        <p>
+          {data.hijri.day} {data.hijri.month}{" "}
+          {data.hijri.year} AH
+        </p>
 
-        {/* MAIN COUNTDOWN */}
-        <div className="main-ring-section">
-          <h3>
-            {engine.isFasting
-              ? "🌇 Iftar Countdown"
-              : "🌅 Sehri Countdown"}
-          </h3>
-
-          <CircularProgress
-            percentage={engine.mainProgress}
-            size={170}
-            strokeWidth={12}
-            color={
-              engine.isFasting
-                ? "#f97316"
-                : "#22d3ee"
-            }
-          >
-            <div>
-              <div>{engine.timeLeft}</div>
-            </div>
-          </CircularProgress>
-
-          <p>
-            Tahajjud starts at {engine.tahajjudTime}
-          </p>
-        </div>
-
-        {/* PRAYER GRID */}
-        <div className="prayer-grid">
-          {PRAYER_NAMES.map((name) => (
-            <div
-              key={name}
-              className={`prayer-card ${
-                engine.currentPrayer === name
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <CircularProgress
-                percentage={
-                  engine.prayerProgress[name] ?? 0
-                }
-                size={90}
-                strokeWidth={6}
-              >
-                <div>
-                  <div>{name}</div>
-                  {name !== "Tahajjud" && (
-                    <div>
-                      {data.timings[name]}
-                    </div>
-                  )}
-                </div>
-              </CircularProgress>
-            </div>
-          ))}
-        </div>
-
+        {isRamadan && (
+          <p>Ramadan Day {data.hijri.day}</p>
+        )}
       </div>
+
+      {/* MAIN SEHRI / IFTAR COUNTDOWN */}
+      <div className="main-ring-section">
+        <h3>
+          {engine.isFasting
+            ? "🌇 Iftar Countdown"
+            : "🌅 Sehri Countdown"}
+        </h3>
+
+        <CircularProgress
+          percentage={engine.mainProgress}
+          size={170}
+          strokeWidth={12}
+          color={
+            engine.isFasting
+              ? "#f97316"
+              : "#22d3ee"
+          }
+        >
+          <div>
+            <div>{engine.timeLeft}</div>
+          </div>
+        </CircularProgress>
+
+        <p>
+          Tahajjud starts at {engine.tahajjudTime}
+        </p>
+      </div>
+
+      {/* CURRENT PRAYER SECTION */}
+      <div className="current-prayer-section">
+        <h3>🕌 Current Prayer</h3>
+
+        <CircularProgress
+          percentage={
+            engine.prayerProgress[engine.currentPrayer]
+          }
+          size={140}
+          strokeWidth={10}
+          color="#34d399"
+        >
+          <div>
+            <div className="current-name">
+              {engine.currentPrayer}
+            </div>
+            {engine.currentPrayer !== "Tahajjud" && (
+              <div className="current-time">
+                {data.timings[engine.currentPrayer]}
+              </div>
+            )}
+          </div>
+        </CircularProgress>
+      </div>
+
+      {/* PRAYER GRID */}
+      <div className="prayer-grid">
+        {PRAYER_NAMES.map((name) => (
+          <div
+            key={name}
+            className={`prayer-card ${
+              engine.currentPrayer === name
+                ? "active"
+                : ""
+            }`}
+          >
+            <CircularProgress
+              percentage={
+                engine.prayerProgress[name] ?? 0
+              }
+              size={90}
+              strokeWidth={6}
+            >
+              <div>
+                <div>{name}</div>
+                {name !== "Tahajjud" && (
+                  <div>
+                    {data.timings[name]}
+                  </div>
+                )}
+              </div>
+            </CircularProgress>
+          </div>
+        ))}
+      </div>
+
     </div>
-  );
+  </div>
+);
 }
 
 export default App;

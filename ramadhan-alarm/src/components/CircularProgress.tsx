@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
+
 interface Props {
   percentage: number;
   size?: number;
   strokeWidth?: number;
   color?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
-
 
 export default function CircularProgress({
   percentage,
@@ -14,7 +15,6 @@ export default function CircularProgress({
   color = "#34d399",
   children
 }: Props) {
-
   const radius = size / 2;
   const normalizedRadius = radius - strokeWidth;
   const circumference =
@@ -40,7 +40,7 @@ export default function CircularProgress({
         style={{ transform: "rotate(-90deg)" }}
       >
         <circle
-          stroke="rgba(255,255,255,0.1)"
+          stroke="rgba(255,255,255,0.12)"
           fill="transparent"
           strokeWidth={strokeWidth}
           r={normalizedRadius}
@@ -64,7 +64,6 @@ export default function CircularProgress({
         />
       </svg>
 
-      {/* THIS IS WHAT YOU WERE MISSING */}
       <div className="ring-center">
         {children}
       </div>

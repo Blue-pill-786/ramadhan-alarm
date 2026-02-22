@@ -11,15 +11,6 @@ interface EngineResult {
   tahajjudTime: string;
 }
 
-// const PRAYERS: PrayerName[] = [
-//   "Fajr",
-//   "Dhuhr",
-//   "Asr",
-//   "Maghrib",
-//   "Isha",
-//   "Tahajjud"
-// ];
-
 export default function usePrayerEngine(
   timings: Timings | null
 ): EngineResult | null {
@@ -28,74 +19,80 @@ export default function usePrayerEngine(
   useEffect(() => {
     if (!timings) return;
 
+    const build = (time: string) => {
+      const [h, m] = time.split(":").map(Number);
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      return d;
+    };
+
     const calculate = () => {
       const now = new Date();
 
-      // Build base prayer times
-      const buildDate = (time: string) => {
-        const [h, m] = time.split(":").map(Number);
-        const d = new Date();
-        d.setHours(h, m, 0, 0);
-        return d;
-      };
+      // ---------- Build today's base times ----------
+      const todayFajr = build(timings.Fajr);
+      const dhuhr = build(timings.Dhuhr);
+      const asr = build(timings.Asr);
+      const maghrib = build(timings.Maghrib);
+      const isha = build(timings.Isha);
 
-      const fajr = buildDate(timings.Fajr);
-      const dhuhr = buildDate(timings.Dhuhr);
-      const asr = buildDate(timings.Asr);
-      const maghrib = buildDate(timings.Maghrib);
-      const isha = buildDate(timings.Isha);
+      // ---------- Ensure strict chronological order ----------
+      if (dhuhr <= todayFajr) dhuhr.setDate(dhuhr.getDate() + 1);
+      if (asr <= dhuhr) asr.setDate(asr.getDate() + 1);
+      if (maghrib <= asr) maghrib.setDate(maghrib.getDate() + 1);
+      if (isha <= maghrib) isha.setDate(isha.getDate() + 1);
 
-      // Adjust fajr if it's technically tomorrow
-      let adjustedFajr = new Date(fajr);
-      if (fajr <= maghrib) {
-        adjustedFajr.setDate(adjustedFajr.getDate() + 1);
+      // ---------- Compute next Fajr ----------
+      let nextFajr = build(timings.Fajr);
+      if (now >= nextFajr) {
+        nextFajr.setDate(nextFajr.getDate() + 1);
       }
 
-      // Tahajjud = last third of night
+      // ---------- Night calculation ----------
+      let nightStart = new Date(maghrib);
+      if (now < maghrib) {
+        nightStart.setDate(nightStart.getDate() - 1);
+      }
+
       const nightDuration =
-        adjustedFajr.getTime() - maghrib.getTime();
+        nextFajr.getTime() - nightStart.getTime();
 
       const tahajjudStart = new Date(
-        maghrib.getTime() + (2 / 3) * nightDuration
+        nightStart.getTime() + (2 / 3) * nightDuration
       );
 
-      const prayers = [
-        { name: "Fajr" as PrayerName, date: fajr },
-        { name: "Dhuhr" as PrayerName, date: dhuhr },
-        { name: "Asr" as PrayerName, date: asr },
-        { name: "Maghrib" as PrayerName, date: maghrib },
-        { name: "Isha" as PrayerName, date: isha },
-        { name: "Tahajjud" as PrayerName, date: tahajjudStart }
-      ].sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      // Determine current & next prayer
+      // ---------- Determine current & next prayer ----------
       let current: PrayerName = "Isha";
       let next: PrayerName = "Fajr";
 
-      for (let i = 0; i < prayers.length; i++) {
-        const p = prayers[i];
-        const nextP = prayers[i + 1];
-
-        if (now >= p.date && (!nextP || now < nextP.date)) {
-          current = p.name;
-          next = nextP ? nextP.name : "Fajr";
-          break;
-        }
+      if (now >= tahajjudStart && now < nextFajr) {
+        current = "Tahajjud";
+        next = "Fajr";
+      } else if (now >= todayFajr && now < dhuhr) {
+        current = "Fajr";
+        next = "Dhuhr";
+      } else if (now >= dhuhr && now < asr) {
+        current = "Dhuhr";
+        next = "Asr";
+      } else if (now >= asr && now < maghrib) {
+        current = "Asr";
+        next = "Maghrib";
+      } else if (now >= maghrib && now < isha) {
+        current = "Maghrib";
+        next = "Isha";
+      } else if (now >= isha && now < tahajjudStart) {
+        current = "Isha";
+        next = "Tahajjud";
       }
 
-      // Fasting state
+      // ---------- Fasting state ----------
       const isFasting =
         current === "Fajr" ||
         current === "Dhuhr" ||
         current === "Asr";
 
-      // Target for main countdown
-      let target = isFasting ? maghrib : adjustedFajr;
-
-      if (!isFasting && now > adjustedFajr) {
-        target = new Date(adjustedFajr);
-        target.setDate(target.getDate() + 1);
-      }
+      // ---------- Sehri / Iftar target ----------
+      const target = isFasting ? maghrib : nextFajr;
 
       const diff = Math.max(
         0,
@@ -106,42 +103,63 @@ export default function usePrayerEngine(
       const minutes = Math.floor((diff % 3600000) / 60000);
       const seconds = Math.floor((diff % 60000) / 1000);
 
-      // Prayer progress
-      const prayerProgress = {} as Record<
-        PrayerName,
-        number
-      >;
+      // ---------- Prayer Progress (remaining based) ----------
+      const timeline = [
+        { name: "Fajr" as PrayerName, date: todayFajr },
+        { name: "Dhuhr" as PrayerName, date: dhuhr },
+        { name: "Asr" as PrayerName, date: asr },
+        { name: "Maghrib" as PrayerName, date: maghrib },
+        { name: "Isha" as PrayerName, date: isha },
+        { name: "Tahajjud" as PrayerName, date: tahajjudStart },
+        { name: "Fajr" as PrayerName, date: nextFajr }
+      ];
 
-      prayers.forEach((p, i) => {
-        const nextP = prayers[i + 1];
+      const prayerProgress =
+        {} as Record<PrayerName, number>;
+
+      timeline.forEach((p, i) => {
+        const nextP = timeline[i + 1];
+        if (!nextP) return;
+
+        const start = p.date.getTime();
+        const end = nextP.date.getTime();
+        const duration = end - start;
+
+        if (duration <= 0) {
+          prayerProgress[p.name] = 0;
+          return;
+        }
 
         if (now < p.date) {
           prayerProgress[p.name] = 0;
-        } else if (!nextP || now >= nextP.date) {
+        } else if (now >= nextP.date) {
           prayerProgress[p.name] = 100;
         } else {
-          const duration =
-            nextP.date.getTime() - p.date.getTime();
-          const elapsed =
-            now.getTime() - p.date.getTime();
-
+          const remaining = end - now.getTime();
           prayerProgress[p.name] =
-            (elapsed / duration) * 100;
+            (remaining / duration) * 100;
         }
       });
 
-      // Main progress
-      const startTime = isFasting ? fajr : maghrib;
+      // ---------- Main ring progress ----------
+      const startTime = isFasting
+        ? todayFajr
+        : isha;
+
       const totalDuration =
         target.getTime() - startTime.getTime();
-      const elapsed =
-        now.getTime() - startTime.getTime();
+
+      const remainingMain =
+        target.getTime() - now.getTime();
 
       const mainProgress =
         totalDuration > 0
           ? Math.min(
               100,
-              Math.max(0, (elapsed / totalDuration) * 100)
+              Math.max(
+                0,
+                (remainingMain / totalDuration) * 100
+              )
             )
           : 0;
 
@@ -157,9 +175,8 @@ export default function usePrayerEngine(
       });
     };
 
-    calculate(); // Run immediately
+    calculate();
     const interval = setInterval(calculate, 1000);
-
     return () => clearInterval(interval);
   }, [timings]);
 

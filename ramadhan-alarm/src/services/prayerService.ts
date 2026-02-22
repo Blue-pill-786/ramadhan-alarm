@@ -7,11 +7,23 @@ export async function fetchPrayerTimes(
   const today = new Date();
 
   const res = await fetch(
-    `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}?latitude=${lat}&longitude=${lon}&method=2&adjustment=1`
+    `https://api.aladhan.com/v1/timings/${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}?latitude=${lat}&longitude=${lon}&method=2`
   );
 
   const json = await res.json();
-  const { timings, date } = json.data;
+  const { timings, date, meta } = json.data;
+
+  // ---------------------------
+  // Hijri correction (display only)
+  // ---------------------------
+
+  const hijriDay = Number(date.hijri.day);
+
+  const REGION_OFFSET =
+    meta.timezone === "Asia/Kolkata" ? -1 : 0;
+
+  const correctedHijriDay =
+    hijriDay + REGION_OFFSET;
 
   return {
     timings: {
@@ -22,7 +34,7 @@ export async function fetchPrayerTimes(
       Isha: timings.Isha.split(" ")[0]
     },
     hijri: {
-      day: date.hijri.day,
+      day: correctedHijriDay,
       month: date.hijri.month.en,
       year: date.hijri.year
     }

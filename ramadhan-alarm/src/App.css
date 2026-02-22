@@ -23,6 +23,32 @@ html, body {
   min-height: 100svh;
   width: 100%;
   display: flex;
+  color: aquamarine;
+}
+
+/* =========================
+   CURRENT PRAYER SECTION
+========================= */
+
+.current-prayer-section {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.current-prayer-section h3 {
+  margin-bottom: 1rem;
+}
+
+.current-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.current-time {
+  font-size: 0.85rem;
+  opacity: 0.9;
 }
 
 /* =========================
