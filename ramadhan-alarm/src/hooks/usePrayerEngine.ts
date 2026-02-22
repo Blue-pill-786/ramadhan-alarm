@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
+import { PRAYER_NAMES } from "../types/prayer";
+import type { PrayerName, Timings } from "../types/prayer";
 
 interface EngineResult {
-  currentPrayer: string;
-  nextPrayer: string;
+  currentPrayer: PrayerName;
+  nextPrayer: PrayerName;
   timeLeft: string;
-  prayerProgress: Record<string, number>;
+  prayerProgress: Record<PrayerName, number>;
   mainProgress: number;
+  isFasting: boolean;
 }
 
 export default function usePrayerEngine(
-  timings: any | null
+  timings: Timings | null
 ): EngineResult | null {
   const [state, setState] = useState<EngineResult | null>(null);
 
@@ -18,36 +21,33 @@ export default function usePrayerEngine(
 
     const interval = setInterval(() => {
       const now = new Date();
-      const names = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
-      const prayers = names.map(name => {
+      const prayers = PRAYER_NAMES.map(name => {
         const [h, m] = timings[name].split(":").map(Number);
         const date = new Date();
         date.setHours(h, m, 0, 0);
         return { name, date };
       });
 
-      // ---- CURRENT + NEXT ----
-      let current = "Isha";
-      let next = "Fajr";
+      let current: PrayerName = "Isha";
+      let next: PrayerName = "Fajr";
 
       for (let i = 0; i < prayers.length; i++) {
         const p = prayers[i];
         const nextP = prayers[i + 1];
 
         if (now >= p.date && (!nextP || now < nextP.date)) {
-          current = p.name;
-          next = nextP ? nextP.name : "Fajr";
+          current = p.name as PrayerName;
+          next = nextP ? (nextP.name as PrayerName) : "Fajr";
           break;
         }
       }
 
-      // ---- IFTAR / SEHRI TARGET ----
       const isFasting =
         ["Fajr", "Dhuhr", "Asr"].includes(current);
 
-      let targetDate: Date;
       let startDate: Date;
+      let targetDate: Date;
 
       if (isFasting) {
         startDate = prayers.find(p => p.name === "Fajr")!.date;
@@ -62,39 +62,39 @@ export default function usePrayerEngine(
         }
       }
 
-      const diff = targetDate.getTime() - now.getTime();
-
-      const hours = Math.max(0, Math.floor(diff / 3600000));
-      const minutes = Math.max(
+      const diff = Math.max(
         0,
-        Math.floor((diff % 3600000) / 60000)
-      );
-      const seconds = Math.max(
-        0,
-        Math.floor((diff % 60000) / 1000)
+        targetDate.getTime() - now.getTime()
       );
 
-      // ---- MINI PRAYER RINGS ----
-      const prayerProgress: Record<string, number> = {};
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.floor(
+        (diff % 3600000) / 60000
+      );
+      const seconds = Math.floor(
+        (diff % 60000) / 1000
+      );
+
+      const prayerProgress =
+        {} as Record<PrayerName, number>;
 
       prayers.forEach((p, index) => {
         const nextP = prayers[index + 1];
 
         if (now < p.date) {
-          prayerProgress[p.name] = 0;
+          prayerProgress[p.name as PrayerName] = 0;
         } else if (!nextP || now >= nextP.date) {
-          prayerProgress[p.name] = 100;
+          prayerProgress[p.name as PrayerName] = 100;
         } else {
           const duration =
             nextP.date.getTime() - p.date.getTime();
           const elapsed =
             now.getTime() - p.date.getTime();
-          prayerProgress[p.name] =
+          prayerProgress[p.name as PrayerName] =
             (elapsed / duration) * 100;
         }
       });
 
-      // ---- MAIN RING PROGRESS ----
       const totalDuration =
         targetDate.getTime() - startDate.getTime();
 
@@ -105,7 +105,10 @@ export default function usePrayerEngine(
         totalDuration > 0
           ? Math.min(
               100,
-              Math.max(0, (elapsedDuration / totalDuration) * 100)
+              Math.max(
+                0,
+                (elapsedDuration / totalDuration) * 100
+              )
             )
           : 0;
 
@@ -114,7 +117,8 @@ export default function usePrayerEngine(
         nextPrayer: next,
         timeLeft: `${hours}h ${minutes}m ${seconds}s`,
         prayerProgress,
-        mainProgress
+        mainProgress,
+        isFasting
       });
     }, 1000);
 
