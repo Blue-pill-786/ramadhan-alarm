@@ -7,22 +7,23 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Ramadhan Alarm India',
-        short_name: 'RamadhanAlarm',
-        description: 'Sehri & Iftar Alarm based on your exact location',
+        name: 'Ramadhan Dashboard',
+        short_name: 'Ramadhan',
+        description: 'Ramadhan Prayer & Sehri/Iftar Companion',
         theme_color: '#065f46',
-        background_color: '#0f172a',
+        background_color: '#020617',
         display: 'standalone',
         start_url: '/',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           }
